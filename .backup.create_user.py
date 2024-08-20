@@ -6,15 +6,9 @@ from werkzeug.security import generate_password_hash
 conn = sqlite3.connect('Logsys/users.db')
 cursor = conn.cursor()
 
-import sys
-
 # Gebruikersgegevens
-if len(sys.argv) != 3:
-    print("Gebruik: python create_user.py <gebruikersnaam> <wachtwoord>")
-    sys.exit(1)
-
-username = sys.argv[1]
-password = sys.argv[2]
+username = 'admin'
+password = 'admin123'
 
 # Wachtwoord hashen
 hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
