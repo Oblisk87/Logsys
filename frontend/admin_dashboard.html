@@ -1,0 +1,128 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #5CCCEF;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+        .header, .footer {
+            background-color: #1E1E1E;
+            padding: 10px;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+        }
+        .sidebar {
+            width: 20%;
+            background-color: #1E1E1E;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .content {
+            width: 75%;
+            background-color: #1E1E1E;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .sidebar a, .content a {
+            color: #5CCCEF;
+            text-decoration: none;
+            display: block;
+            margin: 10px 0;
+        }
+        .sidebar a:hover, .content a:hover {
+            text-decoration: underline;
+        }
+        .table-container {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #5CCCEF;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #1E1E1E;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Admin Dashboard</h1>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Menu</h2>
+            <a href="#">Home</a>
+            <a href="#">Log System</a>
+            <a href="#">Users</a>
+            <a href="#">Settings</a>
+            <a href="#">FAQ</a>
+            <a href="#">Help</a>
+            <a href="#">Support</a>
+            <a href="#">About</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Contact</a>
+            <a href="#">Logout</a>
+        </div>
+        <div class="content">
+            <h2>Welcome, Admin!</h2>
+            <p>This is your dashboard where you can manage users and view logs.</p>
+            <div class="table-container">
+                <h3>Users</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Username</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- User data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-container">
+                <h3>Logs</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Date</th>
+                            <th>Resource</th>
+                            <th>Category</th>
+                            <th>Message</th>
+                            <th>Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Log data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; 2023 NextGen-Development.nl</p>
+    </div>
+</body>
+</html>
