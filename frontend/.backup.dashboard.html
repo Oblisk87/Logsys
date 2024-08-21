@@ -1,1 +1,77 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #5CCCEF;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+        .header, .footer {
+            background-color: #1E1E1E;
+            padding: 10px;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+        }
+        .sidebar {
+            width: 20%;
+            background-color: #1E1E1E;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .content {
+            width: 75%;
+            background-color: #1E1E1E;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .sidebar a, .content a {
+            color: #5CCCEF;
+            text-decoration: none;
+            display: block;
+            margin: 10px 0;
+        }
+        .sidebar a:hover, .content a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>User Dashboard</h1>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Menu</h2>
+            <a href="#">Home</a>
+            <a href="#">Log System</a>
+            <a href="#">Profile</a>
+            <a href="#">Settings</a>
+            <a href="#">FAQ</a>
+            <a href="#">Help</a>
+            <a href="#">Support</a>
+            <a href="#">About</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Contact</a>
+            <a href="#">Logout</a>
+        </div>
+        <div class="content">
+            <h2>Welcome, User!</h2>
+            <p>This is your dashboard where you can view and manage your data.</p>
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; 2023 NextGen-Development.nl</p>
+    </div>
+</body>
+</html>
