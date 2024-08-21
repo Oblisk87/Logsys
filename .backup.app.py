@@ -30,6 +30,34 @@ def serve_index():
 def serve_static(path):
     return send_from_directory(app.static_folder, path)
 
+@app.route('/faq')
+def faq():
+    return send_from_directory('frontend', 'faq.html')
+
+@app.route('/help')
+def help():
+    return send_from_directory('frontend', 'help.html')
+
+@app.route('/support')
+def support():
+    return send_from_directory('frontend', 'support.html')
+
+@app.route('/about')
+def about():
+    return send_from_directory('frontend', 'about.html')
+
+@app.route('/privacy_policy')
+def privacy_policy():
+    return send_from_directory('frontend', 'privacy_policy.html')
+
+@app.route('/terms_of_service')
+def terms_of_service():
+    return send_from_directory('frontend', 'terms_of_service.html')
+
+@app.route('/contact')
+def contact():
+    return send_from_directory('frontend', 'contact.html')
+
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -52,6 +80,7 @@ def login():
 
     if user and check_password_hash(user[0], password):
         token = jwt.encode({'username': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
+        print(f"Generated Token: {token}")
         return jsonify({"token": token}), 200
     else:
         return jsonify({"message": "Invalid username or password"}), 401
@@ -115,4 +144,4 @@ def delete_user():
     return jsonify({"message": "User deleted successfully"}), 200
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    app.run(port=5001)

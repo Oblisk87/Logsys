@@ -30,6 +30,34 @@ def serve_index():
 def serve_static(path):
     return send_from_directory(app.static_folder, path)
 
+@app.route('/faq')
+def faq():
+    return send_from_directory('frontend', 'faq.html')
+
+@app.route('/help')
+def help():
+    return send_from_directory('frontend', 'help.html')
+
+@app.route('/support')
+def support():
+    return send_from_directory('frontend', 'support.html')
+
+@app.route('/about')
+def about():
+    return send_from_directory('frontend', 'about.html')
+
+@app.route('/privacy_policy')
+def privacy_policy():
+    return send_from_directory('frontend', 'privacy_policy.html')
+
+@app.route('/terms_of_service')
+def terms_of_service():
+    return send_from_directory('frontend', 'terms_of_service.html')
+
+@app.route('/contact')
+def contact():
+    return send_from_directory('frontend', 'contact.html')
+
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -105,15 +133,24 @@ def edit_user():
     return jsonify({"message": "User updated successfully"}), 200
 
 @app.route('/delete_user', methods=['DELETE'])
-@token_required
 def delete_user():
-    user_id = request.json['id']
+    data = request.json
+    user_id = data['id']
     conn = sqlite3.connect('Logsys/users.db')
     cursor = conn.cursor()
     cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()
     conn.close()
     return jsonify({"message": "User deleted successfully"}), 200
+
+@app.route('/logs', methods=['GET'])
+def get_logs():
+    conn = sqlite3.connect('Logsys/logs.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM logs")
+    logs = cursor.fetchall()
+    conn.close()
+    return jsonify(logs), 200
 
 if __name__ == '__main__':
     app.run(port=5001)

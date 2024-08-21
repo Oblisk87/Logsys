@@ -117,8 +117,20 @@ def upload_file():
         return jsonify({'message': 'No selected file'}), 400
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return jsonify({'message': 'File uploaded successfully', 'filename': filename}), 201
+        base, ext = os.path.splitext(filename)
+        counter = 1
+        new_filename = filename
+        while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], new_filename)):
+            new_filename = f"{base}_{counter}{ext}"
+            counter += 1
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+        filename = new_filename
+    category = request.form.get('category', 'default')
+    if category not in ['anticheat', 'log', 'media', 'mediapic', 'mediamov', 'mediapolitie', 'mediapicpolitie', 'mediamovpolitie']:
+        return jsonify({'message': 'Invalid category'}), 400
+    return jsonify({'message': 'File uploaded successfully', 'filename': filename, 'category': category}), 201
+    # Voeg hier de 202 - Accepted statuscode toe
+    # return jsonify({'message': 'Accepted'}), 202
     return jsonify({'message': 'File type not allowed'}), 400
 
 @app.route('/files/<filename>', methods=['GET'])
