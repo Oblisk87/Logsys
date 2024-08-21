@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #5CCCEF;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #5CCCEF;
+            text-align: left;
+        }
+        th {
+            background-color: #1E1E1E;
+        }
+        tr:nth-child(even) {
+            background-color: #1E1E1E;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .pagination button {
+            background-color: #5CCCEF;
+            border: none;
+            color: #121212;
+            padding: 10px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+        .pagination button:hover {
+            background-color: #4BB8D6;
+        }
+    </style>
+</head>
+<body>
+    <h1>Logs</h1>
+    <table id="logsTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Datum</th>
+                <th>Resource</th>
+                <th>Categorie</th>
+                <th>Bericht</th>
+                <th>Niveau</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Logs zullen hier worden toegevoegd -->
+        </tbody>
+    </table>
+    <div class="pagination" id="pagination">
+        <!-- Paginaknoppen zullen hier worden toegevoegd -->
+    </div>
+    <script>
+        const logs = [
+            // Voorbeeld logs
+            {id: 1, date: '2023-10-01', resource: 'API', category: 'Info', message: 'Log message 1', level: 'Low'},
+            {id: 2, date: '2023-10-02', resource: 'Database', category: 'Error', message: 'Log message 2', level: 'High'},
+            // Voeg hier meer logs toe
+        ];
+
+        const logsPerPage = 20;
+        let currentPage = 1;
+
+        function displayLogs(page) {
+            const start = (page - 1) * logsPerPage;
+            const end = start + logsPerPage;
+            const logsToDisplay = logs.slice(start, end);
+
+            const tbody = document.getElementById('logsTable').getElementsByTagName('tbody')[0];
+            tbody.innerHTML = '';
+
+            logsToDisplay.forEach(log => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = log.id;
+                row.insertCell(1).innerText = log.date;
+                row.insertCell(2).innerText = log.resource;
+                row.insertCell(3).innerText = log.category;
+                row.insertCell(4).innerText = log.message;
+                row.insertCell(5).innerText = log.level;
+            });
+        }
+
+        function setupPagination() {
+            const pageCount = Math.ceil(logs.length / logsPerPage);
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            for (let i = 1; i <= pageCount; i++) {
+                const button = document.createElement('button');
+                button.innerText = i;
+                button.onclick = () => {
+                    currentPage = i;
+                    displayLogs(currentPage);
+                };
+                pagination.appendChild(button);
+            }
+        }
+
+        displayLogs(currentPage);
+        setupPagination();
+    </script>
+</body>
+</html>

@@ -100,6 +100,339 @@
                     <tbody id="user-table-body">
                     </tbody>
                 </table>
+                <div class="pagination" id="user-pagination">
+                    <!-- Paginaknoppen zullen hier worden toegevoegd -->
+                </div>
+                <button onclick="createUser()">Nieuwe gebruiker aanmaken</button>
+                <div id="user-popup" class="popup">
+                    <div class="popup-content">
+                        <span class="close" onclick="closeUserPopup()">&times;</span>
+                        <h3>Gebruiker bewerken</h3>
+                        <label for="popup-user-id">ID:</label>
+                        <input type="text" id="popup-user-id" disabled>
+                        <label for="popup-user-email">Email:</label>
+                        <input type="text" id="popup-user-email">
+                        <label for="popup-user-username">Username:</label>
+                        <input type="text" id="popup-user-username">
+                        <label for="popup-user-status">Status:</label>
+                        <input type="text" id="popup-user-status">
+                        <label for="popup-user-password">Nieuw wachtwoord:</label>
+                        <input type="password" id="popup-user-password">
+                        <button onclick="saveUserChanges()">Opslaan</button>
+                        <button onclick="closeUserPopup()">Annuleren</button>
+                    </div>
+                </div>
+                <h3>Logs</h3>
+                <table id="logsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Niveau</th>
+                            <th>Datum</th>
+                            <th>Resource</th>
+                            <th>Categorie</th>
+                            <th>Bericht</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Logs zullen hier worden toegevoegd -->
+                    </tbody>
+                </table>
+                <div class="pagination" id="pagination">
+                    <!-- Paginaknoppen zullen hier worden toegevoegd -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; 2023 Admin Dashboard</p>
+    </div>
+    <script>
+        const users = [
+            // Voorbeeld gebruikers
+            {id: 1, email: 'user1@example.com', username: 'user1', status: 'active'},
+            {id: 2, email: 'user2@example.com', username: 'user2', status: 'inactive'},
+            // Voeg hier meer gebruikers toe
+        ];
+
+        function searchUsers(query) {
+            // Zoekfunctie om gebruikers te filteren op basis van de zoekopdracht
+            const filteredUsers = users.filter(user => 
+                user.email.toLowerCase().includes(query.toLowerCase()) || 
+                user.username.toLowerCase().includes(query.toLowerCase())
+            );
+            displayUsers(filteredUsers);
+        }
+
+        const usersPerPage = 20;
+        let currentUserPage = 1;
+
+        function displayUsers(userList = users, page = 1) {
+            const start = (page - 1) * usersPerPage;
+            const end = start + usersPerPage;
+            const usersToDisplay = userList.slice(start, end);
+
+            const tbody = document.getElementById('user-table-body');
+            tbody.innerHTML = '';
+
+            usersToDisplay.forEach(user => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = user.id;
+                row.insertCell(1).innerText = user.email;
+                row.insertCell(2).innerText = user.username;
+                row.insertCell(3).innerText = user.status;
+                row.onclick = () => openUserPopup(user);
+            });
+
+            setupUserPagination(userList);
+        }
+
+        function setupUserPagination(userList) {
+            const pageCount = Math.ceil(userList.length / usersPerPage);
+            const pagination = document.getElementById('user-pagination');
+            pagination.innerHTML = '';
+
+            for (let i = 1; i <= pageCount; i++) {
+                const button = document.createElement('button');
+                button.innerText = i;
+                button.onclick = () => {
+                    currentUserPage = i;
+                    displayUsers(userList, currentUserPage);
+                };
+                pagination.appendChild(button);
+            }
+        }
+
+        async function openUserPopup(user) {
+            const response = await fetch(`http://51e2a3686d4fc51df9.blackbx.ai/user/${user.id}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const userData = await response.json();
+            if (response.ok) {
+                const popup = document.getElementById('user-popup');
+                popup.style.display = 'block';
+                document.getElementById('popup-user-id').value = userData.id;
+                document.getElementById('popup-user-email').value = userData.email;
+                document.getElementById('popup-user-username').value = userData.username;
+                document.getElementById('popup-user-status').value = userData.status;
+            } else {
+                alert(userData.message);
+            }
+        }
+
+            const popup = document.getElementById('user-popup');
+            popup.style.display = 'block';
+            document.getElementById('popup-user-id').value = user.id;
+            document.getElementById('popup-user-email').value = user.email;
+            document.getElementById('popup-user-username').value = user.username;
+            document.getElementById('popup-user-status').value = user.status;
+        }
+
+        function closeUserPopup() {
+            const popup = document.getElementById('user-popup');
+            popup.style.display = 'none';
+        }
+
+        async function saveUserChanges() {
+            const id = document.getElementById('popup-user-id').value;
+            const email = document.getElementById('popup-user-email').value;
+            const username = document.getElementById('popup-user-username').value;
+            const status = document.getElementById('popup-user-status').value;
+            const password = document.getElementById('popup-user-password').value;
+
+            const response = await fetch(`http://51e2a3686d4fc51df9.blackbx.ai/user/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ email, username, status, password })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert(result.message);
+                const user = users.find(u => u.id == id);
+                user.email = email;
+                user.username = username;
+                user.status = status;
+                displayUsers(users, currentUserPage);
+                closeUserPopup();
+            } else {
+                alert(result.message);
+            }
+        }
+
+            const id = document.getElementById('popup-user-id').value;
+            const email = document.getElementById('popup-user-email').value;
+            const username = document.getElementById('popup-user-username').value;
+            const status = document.getElementById('popup-user-status').value;
+
+            const user = users.find(u => u.id == id);
+            user.email = email;
+            user.username = username;
+            user.status = status;
+
+            displayUsers(users, currentUserPage);
+            closeUserPopup();
+        }
+
+        function createUser() {
+            const id = users.length + 1;
+            const email = prompt('Enter email:');
+            const username = prompt('Enter username:');
+            const status = prompt('Enter status:');
+
+            const newUser = { id, email, username, status };
+            users.push(newUser);
+
+            displayUsers(users, currentUserPage);
+        }
+
+        displayUsers();
+            const tbody = document.getElementById('user-table-body');
+            tbody.innerHTML = '';
+
+            users.forEach(user => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = user.id;
+                row.insertCell(1).innerText = user.email;
+                row.insertCell(2).innerText = user.username;
+                row.insertCell(3).innerText = user.status;
+            });
+        }
+
+        displayUsers();
+
+        const logs = [
+            // Voorbeeld logs
+            {id: 1, level: 'Low', date: '2023-10-01', resource: 'API', category: 'Info', message: 'Log message 1'},
+            {id: 2, level: 'High', date: '2023-10-02', resource: 'Database', category: 'Error', message: 'Log message 2'},
+            // Voeg hier meer logs toe
+        ];
+
+        const logsPerPage = 20;
+        let currentPage = 1;
+
+        function displayLogs(page) {
+            const start = (page - 1) * logsPerPage;
+            const end = start + logsPerPage;
+            const logsToDisplay = logs.slice(start, end);
+
+            const tbody = document.getElementById('logsTable').getElementsByTagName('tbody')[0];
+            tbody.innerHTML = '';
+
+            logsToDisplay.forEach(log => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = log.id;
+                row.insertCell(1).innerText = log.level;
+                row.insertCell(2).innerText = log.date;
+                row.insertCell(3).innerText = log.resource;
+                row.insertCell(4).innerText = log.category;
+                row.insertCell(5).innerText = log.message;
+            });
+        }
+
+        function setupPagination() {
+            const pageCount = Math.ceil(logs.length / logsPerPage);
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            for (let i = 1; i <= pageCount; i++) {
+                const button = document.createElement('button');
+                button.innerText = i;
+                button.onclick = () => {
+                    currentPage = i;
+                    displayLogs(currentPage);
+                };
+                pagination.appendChild(button);
+            }
+        }
+
+        displayLogs(currentPage);
+        setupPagination();
+    </script>
+                    </tbody>
+                </table>
+                <h3>Logs</h3>
+                <table id="logsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Niveau</th>
+                            <th>Datum</th>
+                            <th>Resource</th>
+                            <th>Categorie</th>
+                            <th>Bericht</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Logs zullen hier worden toegevoegd -->
+                    </tbody>
+                </table>
+                <div class="pagination" id="pagination">
+                    <!-- Paginaknoppen zullen hier worden toegevoegd -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; 2023 Admin Dashboard</p>
+    </div>
+    <script>
+        const logs = [
+            // Voorbeeld logs
+            {id: 1, date: '2023-10-01', resource: 'API', category: 'Info', message: 'Log message 1', level: 'Low'},
+            {id: 2, date: '2023-10-02', resource: 'Database', category: 'Error', message: 'Log message 2', level: 'High'},
+            // Voeg hier meer logs toe
+        ];
+
+        const logsPerPage = 20;
+        let currentPage = 1;
+
+        function displayLogs(page) {
+            const start = (page - 1) * logsPerPage;
+            const end = start + logsPerPage;
+            const logsToDisplay = logs.slice(start, end);
+
+            const tbody = document.getElementById('logsTable').getElementsByTagName('tbody')[0];
+            tbody.innerHTML = '';
+
+            logsToDisplay.forEach(log => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = log.id;
+                row.insertCell(1).innerText = log.date;
+                row.insertCell(2).innerText = log.resource;
+                row.insertCell(3).innerText = log.category;
+                row.insertCell(4).innerText = log.message;
+                row.insertCell(5).innerText = log.level;
+            });
+        }
+
+        function setupPagination() {
+            const pageCount = Math.ceil(logs.length / logsPerPage);
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            for (let i = 1; i <= pageCount; i++) {
+                const button = document.createElement('button');
+                button.innerText = i;
+                button.onclick = () => {
+                    currentPage = i;
+                    displayLogs(currentPage);
+                };
+                pagination.appendChild(button);
+            }
+        }
+
+        displayLogs(currentPage);
+        setupPagination();
+    </script>
+                    </tbody>
+                </table>
                 <h3>Edit User</h3>
                 <form id="edit-user-form">
                     <label for="edit-id">User ID:</label>

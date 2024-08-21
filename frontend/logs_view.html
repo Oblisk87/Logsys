@@ -1,0 +1,276 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs View</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fff;
+            color: #000;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        body.dark-mode {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        .header, .filters, .pagination {
+            background-color: inherit;
+            color: inherit;
+        }
+        .logs-table th, .logs-table td {
+            border: 1px solid #ddd;
+        }
+        .logs-table th {
+            background-color: #f2f2f2;
+        }
+        body.dark-mode .logs-table th {
+            background-color: #333;
+        }
+        .popup {
+            background-color: #fff;
+            color: #000;
+        }
+        body.dark-mode .popup {
+            background-color: #333;
+            color: #e0e0e0;
+        }
+        .dark-mode-toggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        body.dark-mode .dark-mode-toggle {
+            background-color: #fff;
+            color: #000;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .filters {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .filters div {
+            margin-right: 10px;
+            position: relative;
+        }
+        .dropdown {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+        .dropdown.active {
+            display: block;
+        }
+        .dropdown label {
+            display: block;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        .dropdown label:hover {
+            background-color: #f1f1f1;
+        }
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .logs-table th, .logs-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .logs-table th {
+            background-color: #f2f2f2;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .popup.active {
+            display: block;
+        }
+        .popup .close-btn {
+            display: block;
+            margin-top: 20px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <label for="start-date">Begin Date:</label>
+            <input type="date" id="start-date">
+            <label for="end-date">End Date:</label>
+            <input type="date" id="end-date">
+        </div>
+        <div>
+            <input type="text" id="search" placeholder="Search...">
+        </div>
+    </div>
+    <div class="filters">
+        <div>
+            <button onclick="toggleDropdown('resource-dropdown')">Resource</button>
+            <div id="resource-dropdown" class="dropdown">
+                <label><input type="checkbox" value="Resource1"> Resource1</label>
+                <label><input type="checkbox" value="Resource2"> Resource2</label>
+                <label><input type="checkbox" value="Resource3"> Resource3</label>
+                <label><input type="checkbox" value="Resource4"> Resource4</label>
+                <label><input type="checkbox" value="Resource5"> Resource5</label>
+            </div>
+            <button onclick="toggleDropdown('category-dropdown')">Category</button>
+            <div id="category-dropdown" class="dropdown">
+                <label><input type="checkbox" value="log"> log</label>
+                <label><input type="checkbox" value="anticheat"> anticheat</label>
+            </div>
+            <button onclick="toggleDropdown('level-dropdown')">Level</button>
+            <div id="level-dropdown" class="dropdown">
+                <label><input type="checkbox" value="Low"> Low</label>
+                <label><input type="checkbox" value="Med"> Med</label>
+                <label><input type="checkbox" value="High"> High</label>
+                <label><input type="checkbox" value="Info"> Info</label>
+                <label><input type="checkbox" value="Error"> Error</label>
+            </div>
+        </div>
+    </div>
+    <table class="logs-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Resource</th>
+                <th>Category</th>
+                <th>Message</th>
+                <th>Level</th>
+            </tr>
+        </thead>
+        <tbody id="logs-body">
+            <!-- Logs will be dynamically inserted here -->
+        </tbody>
+    </table>
+    <div class="pagination">
+        <button onclick="prevPage()">Previous</button>
+        <button onclick="nextPage()">Next</button>
+    </div>
+    <div class="popup" id="log-popup">
+        <div id="popup-content">
+            <!-- Log details will be dynamically inserted here -->
+        </div>
+        <div class="close-btn">
+            <button onclick="closePopup()">Close</button>
+        </div>
+    </div>
+    <script>
+        // JavaScript code to handle filtering, pagination, popup, and dark mode toggle
+        document.addEventListener('DOMContentLoaded', () => {
+            const darkModeToggle = document.createElement('button');
+            darkModeToggle.className = 'dark-mode-toggle';
+            darkModeToggle.textContent = 'Toggle Dark Mode';
+            darkModeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+            });
+            document.body.appendChild(darkModeToggle);
+        });
+        let currentPage = 1;
+        const perPage = 20;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchLogs();
+        });
+
+        function fetchLogs() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const searchQuery = document.getElementById('search').value;
+            const url = new URL('/api/logs', window.location.origin);
+            url.searchParams.append('page', currentPage);
+            url.searchParams.append('per_page', perPage);
+            if (startDate) url.searchParams.append('start_date', startDate);
+            if (endDate) url.searchParams.append('end_date', endDate);
+            if (searchQuery) url.searchParams.append('search_query', searchQuery);
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const logsBody = document.getElementById('logs-body');
+                    logsBody.innerHTML = '';
+                    data.forEach(log => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${log[0]}</td>
+                            <td>${log[1]}</td>
+                            <td>${log[2]}</td>
+                            <td>${log[3]}</td>
+                            <td>${log[4]}</td>
+                            <td>${log[5]}</td>
+                        `;
+                        row.addEventListener('click', () => openPopup(log));
+                        logsBody.appendChild(row);
+                    });
+                });
+        }
+
+        function filterBy(type) {
+            // Implement filtering logic here
+            fetchLogs();
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchLogs();
+            }
+        }
+
+        function nextPage() {
+            currentPage++;
+            fetchLogs();
+        }
+
+        function openPopup(log) {
+            const popupContent = document.getElementById('popup-content');
+            popupContent.innerHTML = `
+                <p><strong>ID:</strong> ${log[0]}</p>
+                <p><strong>Date:</strong> ${log[1]}</p>
+                <p><strong>Resource:</strong> ${log[2]}</p>
+                <p><strong>Category:</strong> ${log[3]}</p>
+                <p><strong>Message:</strong> ${log[4]}</p>
+                <p><strong>Level:</strong> ${log[5]}</p>
+            `;
+            document.getElementById('log-popup').classList.add('active');
+        }
+
+        function closePopup() {
+            document.getElementById('log-popup').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
