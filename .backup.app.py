@@ -4,15 +4,34 @@ import datetime
 from functools import wraps
 from flask import Flask, send_from_directory, request, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
+import os
+import sqlite3
+import sys
+from flask_cors import CORS, cross_origin
+import datetime
 import sqlite3
 
 app = Flask(__name__, static_folder='frontend')
 app.config['SECRET_KEY'] = 'your_secret_key'
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+def log_action(resource, category, message, level):
+    conn = sqlite3.connect('Logsys/users.db')
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO logs (date, resource, category, message, level) VALUES (?, ?, ?, ?, ?)",
+                   (datetime.datetime.now(), resource, category, message, level))
+    conn.commit()
+    conn.close()
 
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = request.headers.get('x-access-tokens')
+        token = request.headers.get('Authorization')
+        if token and token.startswith('Bearer '):
+            token = token.split(' ')[1]
+        app.logger.debug(f"Authorization Header: {request.headers.get('Authorization')}")
+        app.logger.debug(f"Extracted Token: {token}")
         if not token:
             return jsonify({'message': 'Token is missing!'}), 401
         try:
@@ -54,11 +73,107 @@ def privacy_policy():
 def terms_of_service():
     return send_from_directory('frontend', 'terms_of_service.html')
 
+@app.route('/logs_view')
+def logs_view():
+    return send_from_directory('frontend', 'logs_view.html')
+
 @app.route('/contact')
 def contact():
     return send_from_directory('frontend', 'contact.html')
 
+@app.route('/api/resources', methods=['GET'])
+def fetch_resources():
+    conn = sqlite3.connect('Logsys/logs.db')
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT DISTINCT resource FROM logs")
+    resources = cursor.fetchall()
+    
+    conn.close()
+    
+    # Convert the list of tuples to a list of strings
+    resources = [resource[0] for resource in resources]
+    
+    return jsonify(resources)
+
+@app.route('/api/logs', methods=['GET'])
+def fetch_logs():
+    conn = sqlite3.connect('Logsys/logs.db')
+    cursor = conn.cursor()
+    
+    # Fetch query parameters
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    search_query = request.args.get('search_query')
+    resources = request.args.getlist('resources')
+    categories = request.args.getlist('categories')
+    levels = request.args.getlist('levels')
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 20))
+    
+    # Build the query
+    query = "SELECT id, date, resource, category, message, level FROM logs WHERE 1=1"
+    params = []
+    
+    if start_date:
+        query += " AND date >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND date <= ?"
+        params.append(end_date)
+    if search_query:
+        query += " AND (message LIKE ? OR resource LIKE ? OR category LIKE ?)"
+        params.extend([f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"])
+    if resources:
+        query += " AND resource IN ({})".format(','.join('?' for _ in resources))
+        params.extend(resources)
+    if categories:
+        query += " AND category IN ({})".format(','.join('?' for _ in categories))
+        params.extend(categories)
+    if levels:
+        query += " AND level IN ({})".format(','.join('?' for _ in levels))
+        params.extend(levels)
+    
+    query += " ORDER BY date DESC LIMIT ? OFFSET ?"
+    params.extend([per_page, (page - 1) * per_page])
+    
+    cursor.execute(query, params)
+    logs = cursor.fetchall()
+    conn.close()
+    
+    return jsonify(logs)
+
+@app.route('/user/<int:user_id>', methods=['GET', 'PUT'])
+@token_required
+def get_user(user_id):
+    if request.method == 'GET':
+        conn = sqlite3.connect('Logsys/users.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, email, username, status FROM users WHERE id = ?", (user_id,))
+        user = cursor.fetchone()
+        conn.close()
+        if user:
+            return jsonify({'id': user[0], 'email': user[1], 'username': user[2], 'status': user[3]})
+        return jsonify({'message': 'User not found'}), 404
+    elif request.method == 'PUT':
+        data = request.get_json()
+        email = data.get('email')
+        username = data.get('username')
+        status = data.get('status')
+        password = data.get('password')
+        conn = sqlite3.connect('Logsys/users.db')
+        cursor = conn.cursor()
+        if password:
+            hashed_password = generate_password_hash(password)
+            cursor.execute("UPDATE users SET email = ?, username = ?, status = ?, password = ? WHERE id = ?", (email, username, status, hashed_password, user_id))
+        else:
+            cursor.execute("UPDATE users SET email = ?, username = ?, status = ? WHERE id = ?", (email, username, status, user_id))
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'User updated successfully'})
+
 @app.route('/login', methods=['POST'])
+@cross_origin()
 def login():
     data = request.get_json()
     username = data.get('username')
@@ -81,9 +196,32 @@ def login():
     if user and check_password_hash(user[0], password):
         token = jwt.encode({'username': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
         print(f"Generated Token: {token}")
+        log_action('auth', 'login', f'User {username} logged in', 'info')
         return jsonify({"token": token}), 200
     else:
         return jsonify({"message": "Invalid username or password"}), 401
+
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp', 'mp4'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload', methods=['POST'])
+@token_required
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'message': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'message': 'No selected file'}), 400
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        log_action('file', 'upload', f'File {filename} uploaded', 'info')
+        return jsonify({'message': 'File uploaded successfully', 'url': f"/uploads/{filename}"}), 201
+    return jsonify({'message': 'File type not allowed'}), 400
 
 @app.route('/users', methods=['GET'])
 @token_required
@@ -116,6 +254,7 @@ def add_user():
     import time
     time.sleep(0.1)
     conn.close()
+    log_action('user', 'add', f'User {username} added', 'info')
     return jsonify({"message": "User added successfully"}), 201
 
 @app.route('/edit_user', methods=['PUT'])
@@ -130,18 +269,31 @@ def edit_user():
     cursor.execute("UPDATE users SET username = ?, password = ? WHERE id = ?", (username, password, user_id))
     conn.commit()
     conn.close()
+    log_action('user', 'edit', f'User {username} updated', 'info')
     return jsonify({"message": "User updated successfully"}), 200
 
 @app.route('/delete_user', methods=['DELETE'])
-@token_required
 def delete_user():
-    user_id = request.json['id']
+    data = request.json
+    user_id = data['id']
     conn = sqlite3.connect('Logsys/users.db')
     cursor = conn.cursor()
     cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()
     conn.close()
+    log_action('user', 'delete', f'User {user_id} deleted', 'info')
     return jsonify({"message": "User deleted successfully"}), 200
 
+@app.route('/logs', methods=['GET'])
+def retrieve_logs():
+    conn = sqlite3.connect('Logsys/logs.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM logs")
+    logs = cursor.fetchall()
+    conn.close()
+    return jsonify(logs), 200
+
 if __name__ == '__main__':
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
     app.run(port=5001)

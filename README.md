@@ -1,6 +1,15 @@
 
 # Logsys API Documentatie
 
+## Belangrijke Afhankelijkheden
+Dit project maakt gebruik van de volgende belangrijke afhankelijkheden:
+- SQLite
+- Flask-CORS
+- Werkzeug
+- PyJWT
+
+Zorg ervoor dat deze afhankelijkheden correct zijn geïnstalleerd en draaien. Voeg meldingen toe om te waarschuwen als een van deze afhankelijkheden niet werkt.
+
 ## Inhoudsopgave
 1. [Inleiding](#inleiding)
 2. [Installatie](#installatie)

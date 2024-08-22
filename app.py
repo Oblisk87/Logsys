@@ -7,13 +7,44 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import os
 import sqlite3
-from flask_cors import CORS
+import sys
+
+# Controleer of SQLite draait
+try:
+    conn = sqlite3.connect('Logsys/users.db')
+    conn.execute('SELECT 1')
+    conn.close()
+except sqlite3.Error as e:
+    print(f"SQLite fout: {e}")
+    sys.exit(1)
+
+# Controleer of Flask-CORS is geïnstalleerd
+try:
+    import flask_cors
+except ImportError:
+    print("Flask-CORS is niet geïnstalleerd.")
+    sys.exit(1)
+
+# Controleer of Werkzeug is geïnstalleerd
+try:
+    import werkzeug
+except ImportError:
+    print("Werkzeug is niet geïnstalleerd.")
+    sys.exit(1)
+
+# Controleer of PyJWT is geïnstalleerd
+try:
+    import jwt
+except ImportError:
+    print("PyJWT is niet geïnstalleerd.")
+    sys.exit(1)
+from flask_cors import CORS, cross_origin
 import datetime
 import sqlite3
 
 app = Flask(__name__, static_folder='frontend')
 app.config['SECRET_KEY'] = 'your_secret_key'
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 def log_action(resource, category, message, level):
     conn = sqlite3.connect('Logsys/users.db')
@@ -79,6 +110,21 @@ def logs_view():
 @app.route('/contact')
 def contact():
     return send_from_directory('frontend', 'contact.html')
+
+@app.route('/api/resources', methods=['GET'])
+def fetch_resources():
+    conn = sqlite3.connect('Logsys/logs.db')
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT DISTINCT resource FROM logs")
+    resources = cursor.fetchall()
+    
+    conn.close()
+    
+    # Convert the list of tuples to a list of strings
+    resources = [resource[0] for resource in resources]
+    
+    return jsonify(resources)
 
 @app.route('/api/logs', methods=['GET'])
 def fetch_logs():
@@ -157,6 +203,7 @@ def get_user(user_id):
         return jsonify({'message': 'User updated successfully'})
 
 @app.route('/login', methods=['POST'])
+@cross_origin()
 def login():
     data = request.get_json()
     username = data.get('username')

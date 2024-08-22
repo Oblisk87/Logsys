@@ -244,11 +244,10 @@
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td>${log[0]}</td>
-                            <td>${log[2]}</td>
                             <td>${log[1]}</td>
-                            <td>${log[4]}</td>
-                            <td>${log[5]}</td>
+                            <td>${log[2]}</td>
                             <td>${log[3]}</td>
+                            <td>${log[4]}</td>
                         `;
                         row.addEventListener('click', () => openPopup(log));
                         logsBody.appendChild(row);
