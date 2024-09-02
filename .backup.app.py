@@ -8,42 +8,12 @@ from werkzeug.utils import secure_filename
 import os
 import sqlite3
 import sys
-
-# Controleer of SQLite draait
-try:
-    conn = sqlite3.connect('Logsys/users.db')
-    conn.execute('SELECT 1')
-    conn.close()
-except sqlite3.Error as e:
-    print(f"SQLite fout: {e}")
-    sys.exit(1)
-
-# Controleer of Flask-CORS is geïnstalleerd
-try:
-    import flask_cors
-except ImportError:
-    print("Flask-CORS is niet geïnstalleerd.")
-    sys.exit(1)
-
-# Controleer of Werkzeug is geïnstalleerd
-try:
-    import werkzeug
-except ImportError:
-    print("Werkzeug is niet geïnstalleerd.")
-    sys.exit(1)
-
-# Controleer of PyJWT is geïnstalleerd
-try:
-    import jwt
-except ImportError:
-    print("PyJWT is niet geïnstalleerd.")
-    sys.exit(1)
 from flask_cors import CORS, cross_origin
 import datetime
 import sqlite3
 
 app = Flask(__name__, static_folder='frontend')
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your_secret_key')
+app.config['SECRET_KEY'] = 'your_secret_key'
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 def log_action(resource, category, message, level):
@@ -53,93 +23,6 @@ def log_action(resource, category, message, level):
                    (datetime.datetime.now(), resource, category, message, level))
     conn.commit()
     conn.close()
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'jpg', 'jpeg', 'png', 'webp', 'mp4'}
-
-@app.route('/upload', methods=['POST'])
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = request.headers.get('Authorization')
-        if token and token.startswith('Bearer '):
-            token = token.split(' ')[1]
-        app.logger.debug(f"Authorization Header: {request.headers.get('Authorization')}")
-        app.logger.debug(f"Extracted Token: {token}")
-        if not token:
-            return jsonify({'message': 'Token is missing!'}), 401
-        try:
-            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
-        except:
-            return jsonify({'message': 'Token is invalid!'}), 401
-        return f(*args, **kwargs)
-    return decorated
-
-@token_required
-def upload_file():
-    if 'file' not in request.files:
-        return jsonify({'message': 'No file part'}), 400
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'message': 'No selected file'}), 400
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        resource = 'file'
-        category = 'upload'
-        message = f'File {filename} uploaded'
-        level = 'info'
-        conn = sqlite3.connect('Logsys/users.db')
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO logs (date, resource, category, message, level) VALUES (?, ?, ?, ?, ?)",
-                       (datetime.datetime.now(), resource, category, message, level))
-        conn.commit()
-        conn.close()
-        return jsonify({'message': 'File uploaded successfully', 'location': f"/media/{filename}"}), 201
-    return jsonify({'message': 'File type not allowed'}), 400
-
-def create_user(username, password):
-    conn = sqlite3.connect('Logsys/users.db')
-    cursor = conn.cursor()
-    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-    cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
-    conn.commit()
-    conn.close()
-
-def authenticate_user(username, password):
-    conn = sqlite3.connect('Logsys/users.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
-    user = cursor.fetchone()
-    conn.close()
-    if user and check_password_hash(user[0], password):
-        return True
-    return False
-
-@app.route('/register', methods=['POST'])
-def register():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    if not username or not password:
-        return jsonify({'message': 'Username and password are required'}), 400
-    try:
-        create_user(username, password)
-        return jsonify({'message': 'User created successfully'}), 201
-    except sqlite3.IntegrityError:
-        return jsonify({'message': 'Username already exists'}), 409
-
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    if not username or not password:
-        return jsonify({'message': 'Username and password are required'}), 400
-    if authenticate_user(username, password):
-        token = jwt.encode({'username': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, app.config['SECRET_KEY'])
-        return jsonify({'token': token}), 200
-    return jsonify({'message': 'Invalid credentials'}), 401
 
 def token_required(f):
     @wraps(f)
@@ -169,8 +52,6 @@ def serve_static(path):
 @app.route('/faq')
 def faq():
     return send_from_directory('frontend', 'faq.html')
-
-
 
 @app.route('/help')
 def help():

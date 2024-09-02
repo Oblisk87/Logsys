@@ -202,21 +202,18 @@ def contact():
 
 @app.route('/api/resources', methods=['GET'])
 def fetch_resources():
-    try:
-        conn = sqlite3.connect('Logsys/logs.db')
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT DISTINCT resource FROM logs")
-        resources = cursor.fetchall()
-        
-        conn.close()
-        
-        # Convert the list of tuples to a list of strings
-        resources = [resource[0] for resource in resources]
-        
-        return jsonify(resources), 200
-    except sqlite3.Error as e:
-        return jsonify({'message': 'Internal Server Error', 'error': str(e)}), 500
+    conn = sqlite3.connect('Logsys/logs.db')
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT DISTINCT resource FROM logs")
+    resources = cursor.fetchall()
+    
+    conn.close()
+    
+    # Convert the list of tuples to a list of strings
+    resources = [resource[0] for resource in resources]
+    
+    return jsonify(resources)
 
 @app.route('/api/logs', methods=['GET'])
 def fetch_logs():
