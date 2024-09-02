@@ -123,69 +123,7 @@
                     })
                     .catch(error => console.error('Error fetching logs:', error));
             });
-function fetchLogs() {
-    fetch('/api/logs')
-        .then(response => response.json())
-        .then(data => {
-            displayLogs(data);
-            setupPagination(data.length, logsPerPage, 'log-pagination', displayLogs);
-        });
-}
-
-function displayLogs(logs) {
-    const start = (currentPage - 1) * logsPerPage;
-    const end = start + logsPerPage;
-    const logsToDisplay = logs.slice(start, end);
-
-    const tbody = document.getElementById('log-table-body');
-    tbody.innerHTML = '';
-
-    logsToDisplay.forEach(log => {
-        const row = tbody.insertRow();
-        row.insertCell(0).innerText = log.id;
-        row.insertCell(1).innerText = log.date;
-        row.insertCell(2).innerText = log.resource;
-        row.insertCell(3).innerText = log.category;
-        row.insertCell(4).innerText = log.message;
-        row.insertCell(5).innerText = log.level;
-    });
-}
-
-function saveProfile() {
-    const email = document.getElementById('profile-email').value;
-    const username = document.getElementById('profile-username').value;
-
-    fetch('/api/profile', {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, username })
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(data.message);
-    });
-}
-
-function setupPagination(totalItems, itemsPerPage, paginationId, displayFunction) {
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    const pagination = document.getElementById(paginationId);
-    pagination.innerHTML = '';
-
-    for (let i = 1; i <= totalPages; i++) {
-        const button = document.createElement('button');
-        button.innerText = i;
-        button.onclick = () => {
-            currentPage = i;
-            displayFunction();
-        };
-        pagination.appendChild(button);
-    }
-}
-
-document.addEventListener('DOMContentLoaded', fetchLogs);
-</script>
+        </script>
     </div>
     <div class="footer">
         <p>&copy; 2023 NextGen-Development.nl</p>

@@ -170,7 +170,29 @@ def serve_static(path):
 def faq():
     return send_from_directory('frontend', 'faq.html')
 
+@app.route('/help')
+def help():
+    return send_from_directory('frontend', 'help.html')
 
+@app.route('/support')
+def support():
+    return send_from_directory('frontend', 'support.html')
+
+@app.route('/about')
+def about():
+    return send_from_directory('frontend', 'about.html')
+
+@app.route('/privacy_policy')
+def privacy_policy():
+    return send_from_directory('frontend', 'privacy_policy.html')
+
+@app.route('/terms_of_service')
+def terms_of_service():
+    return send_from_directory('frontend', 'terms_of_service.html')
+
+@app.route('/contact')
+def contact():
+    return send_from_directory('frontend', 'contact.html')
 
 @app.route('/help')
 def help():
